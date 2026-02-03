@@ -7,12 +7,12 @@ A lightweight, zero-dependency TypeScript library for masking credit card number
 
 ## Features
 
-🔒 **PCI DSS Compliant** - Follows payment card industry standards
-✨ **Lightweight** - Under 2KB, zero dependencies
-📦 **TypeScript** - Full type safety and IntelliSense support
-⚙️ **Flexible** - Extensive customization options
-🎯 **Universal** - Supports all card types (Visa, Mastercard, Amex, JCB, etc.)
-🚀 **Simple API** - Easy to use with sensible defaults
+- 🔒 **PCI DSS Compliant** - Follows payment card industry standards
+- ✨ **Lightweight** - Under 2KB, zero dependencies
+- 📦 **TypeScript** - Full type safety and IntelliSense support
+- ⚙️ **Flexible** - Extensive customization options
+- 🎯 **Universal** - Supports all card types (Visa, Mastercard, Amex, JCB, etc.)
+- 🚀 **Simple API** - Easy to use with sensible defaults
 
 ## Installation
 
