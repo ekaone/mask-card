@@ -1,0 +1,67 @@
+{
+  "name": "@ekaone/mask-card",
+  "version": "1.0.0",
+  "description": "A lightweight, zero-dependency TypeScript library for masking credit card numbers",
+  "keywords": [
+    "credit card",
+    "mask",
+    "obfuscate",
+    "security",
+    "mask-visa",
+    "mask-mastercard",
+    "mask-amex",
+    "mask-discover",
+    "mask-jcb",
+    "mask-diners",
+    "typescript"
+  ],
+  "author": {
+    "name": "Eka Prasetia",
+    "email": "ekaone3033@gmail.com",
+    "url": "https://prasetia.me"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ekaone/mask-card"
+  },
+  "bugs": {
+    "url": "https://github.com/ekaone/mask-card/issues"
+  },
+  "homepage": "https://github.com/ekaone/mask-card#readme",
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "rimraf": "^6.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  }
+}
