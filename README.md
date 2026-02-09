@@ -527,4 +527,10 @@ MIT © Eka Prasetia
 
 ## Related Packages
 
-- [@ekaone/mask-card](https://www.npmjs.com/package/@ekaone/mask-card) - Credit card masking library
+- [Email masking library](https://github.com/ekaone/mask-email)
+- [Token masking library](https://github.com/ekaone/mask-token)
+- [Phone masking library](https://github.com/ekaone/mask-phone)
+
+---
+
+⭐ If this library helps you, please consider giving it a star on GitHub!
