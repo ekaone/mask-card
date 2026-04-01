@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'examples/**'
       - 'LICENSE'
       - '.gitignore'
   pull_request:
@@ -16,6 +17,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'examples/**'
       - 'LICENSE'
       - '.gitignore'
 
