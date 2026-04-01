@@ -626,7 +626,7 @@ maskCard('45321234567890123456789');
 
 ## Performance
 
-- ⚡ Lightweight: < 2KB minified + gzipped
+- ⚡ Lightweight: < 2KB gzipped (minified)
 - 🚀 Zero dependencies
 - 💨 Fast execution (< 1ms for typical cards)
 - 🌳 Tree-shakeable
