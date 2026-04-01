@@ -1,5 +1,16 @@
 export type MaskChar = string;
 
+export type CardType =
+  | "visa"
+  | "mastercard"
+  | "amex"
+  | "discover"
+  | "jcb"
+  | "diners"
+  | "unionpay"
+  | "maestro"
+  | "unknown";
+
 export interface MaskCardOptions {
   /**
    * Character to use for masking
