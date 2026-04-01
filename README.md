@@ -3,16 +3,19 @@ A lightweight, zero-dependency TypeScript library for masking credit card number
 [![npm version](https://img.shields.io/npm/v/@ekaone/mask-card.svg)](https://www.npmjs.com/package/@ekaone/mask-card)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@ekaone/mask-card)](https://bundlephobia.com/package/@ekaone/mask-card)
 
 ## Features
 
-- 🔒 **PCI DSS Compliant** - Follows payment card industry standards
-- ✨ **Lightweight** - Under 2KB, zero dependencies
+- 🔒 **PCI DSS friendly** - Defaults align with common display guidelines (last 4 digits)
+- ✨ **Lightweight** - Small footprint, zero dependencies
 - 📦 **TypeScript** - Full type safety and IntelliSense support
-- ⚙️ **Flexible** - Extensive customization options
-- 🎯 **Universal** - Supports all card types (Visa, Mastercard, Amex, JCB, etc.)
-- 🚀 **Simple API** - Easy to use with sensible defaults
+- 🎨 **Auto-format** - `maskCardAuto` picks spacing by detected card brand (Visa, Amex, Diners, etc.)
+- 🏷️ **Card type detection** - `detectCardType` and `getCardTypeGrouping` for BIN-style routing
+- ✅ **Luhn checks** - `isValidCardLuhn` / `isValidCard` for checksum (and optional 13–19 length)
+- 📋 **Batch** - `maskCardBatch` to mask many numbers with one options object
+- 🧩 **Helpers** - `getCardLast`, `getCardFirst`, `getCardLast4`, `getCardFirst6`
+- ⚙️ **Flexible** - Mask character, grouping, shortened masks, preserve separators, validation
+- 🎯 **Universal** - Works with major brands (Visa, Mastercard, Amex, Discover, JCB, Diners, UnionPay, Maestro)
 
 ## Installation
 
@@ -190,64 +193,228 @@ maskCard('4532123456789012', {
 // Output: 'XXXX XXXX XX78 9012'
 ```
 
+### Auto-format (`maskCardAuto`)
+
+Detects the card brand from the number and applies brand-typical spacing (Amex **4-6-5**, Diners **4-6-4**, most others **4-4-4-4**). Group sizes are adjusted for PAN lengths that are not 16 digits (e.g. 13- or 19-digit numbers). You can still pass `grouping` in options to override detection. `preserveSpacing` is always turned off for this helper so the output uses normalized spaces (not the input’s dashes or spaces).
+
+```typescript
+import { maskCardAuto } from '@ekaone/mask-card';
+
+maskCardAuto('4532123456789012');
+// '**** **** **** 9012'
+
+maskCardAuto('378282246310005');
+// '**** ****** *0005'
+
+maskCardAuto('4532123456789012', { maskChar: '•', unmaskedStart: 4 });
+// '4532 •••• •••• 9012'
+```
+
+### Batch masking (`maskCardBatch`)
+
+Applies the same `MaskCardOptions` to every element. Non-arrays or nullish inputs return an empty array.
+
+```typescript
+import { maskCardBatch } from '@ekaone/mask-card';
+
+maskCardBatch(['4532123456789012', '5500000000000004'], { grouping: 4 });
+// ['**** **** **** 9012', '**** **** **** 0004']
+```
+
+For brand-specific spacing on each row, map with `maskCardAuto` instead of a single `grouping` in batch.
+
+### Card type detection
+
+```typescript
+import { detectCardType, getCardTypeGrouping } from '@ekaone/mask-card';
+
+detectCardType('4532123456789012'); // 'visa'
+
+getCardTypeGrouping('amex'); // [4, 6, 5]
+```
+
+`detectCardType` returns one of: `visa`, `mastercard`, `amex`, `discover`, `jcb`, `diners`, `unionpay`, `maestro`, or `unknown` (see `CardType` below). It ignores non-digits; empty or invalid input yields `unknown`.
+
+### Luhn validation
+
+```typescript
+import { isValidCardLuhn, isValidCard } from '@ekaone/mask-card';
+
+isValidCardLuhn('4532123456789014'); // true (mod-10 + formatting stripped)
+
+isValidCard('4111111111111111'); // true — Luhn + length 13–19
+isValidCard('4111111111111111', false); // true — Luhn only, skips length check
+
+// All-zero strings fail intentionally (checksum would pass but not a real PAN)
+isValidCardLuhn('0000000000000000'); // false
+```
+
+### Helpers (first / last digits)
+
+Useful for labels, BIN display, or “last four” copy (still follow your PCI / retention policies).
+
+```typescript
+import { getCardLast, getCardFirst, getCardLast4, getCardFirst6 } from '@ekaone/mask-card';
+
+getCardLast(4, '4532-1234-5678-9012'); // '9012'
+getCardFirst(6, '4532123456789012');   // '453212'
+getCardLast4('4532123456789012');      // '9012'
+getCardFirst6('4532123456789012');     // '453212'
+
+getCardLast(0, '4532123456789012');    // '' — counts ≤ 0 return ''
+```
+
 ## API Reference
 
 ### `maskCard(input, options?)`
 
 Masks a credit card number according to the provided options.
 
-#### Parameters
+| | |
+|---|---|
+| **input** | `CardInput` — string or number; non-digits are stripped |
+| **options** | `MaskCardOptions` (optional) |
+| **returns** | `MaskedResult` — masked string |
 
-- **input** (`string | number`) - The card number to mask
-- **options** (`MaskCardOptions`, optional) - Configuration options
-
-#### Options
+#### `MaskCardOptions`
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `maskChar` | `string` | `'*'` | Character used for masking |
-| `unmaskedStart` | `number` | `0` | Number of digits to show at the beginning |
-| `unmaskedEnd` | `number` | `4` | Number of digits to show at the end |
-| `preserveSpacing` | `boolean` | `false` | Maintain original spacing/formatting from input |
-| `grouping` | `number \| number[]` | `undefined` | Add spacing in output (number for uniform, array for custom) |
-| `showLength` | `boolean` | `true` | Maintain original digit count in output |
-| `validateInput` | `boolean` | `false` | Validate if input looks like valid card number (13-19 digits) |
+| `unmaskedStart` | `number` | `0` | Digits to show at the start |
+| `unmaskedEnd` | `number` | `4` | Digits to show at the end |
+| `preserveSpacing` | `boolean` | `false` | Keep non-digit separators from the input (spaces, dashes, dots, etc.) |
+| `grouping` | `number \| number[]` | `undefined` | Uniform group size (e.g. `4`) or pattern (e.g. `[4, 6, 5]`). Arrays are adjusted so the full masked length is covered |
+| `showLength` | `boolean` | `true` | If `false`, collapse the middle to a short mask |
+| `validateInput` | `boolean` | `false` | If `true`, require 13–19 digits or throw |
 
-#### Returns
+---
 
-- (`string`) - The masked card number
+### `maskCardAuto(input, options?)`
 
-#### TypeScript Types
+Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping(detectCardType(input))` when omitted, and `preserveSpacing` is forced to `false`.
+
+| | |
+|---|---|
+| **input** | `CardInput` |
+| **options** | `MaskCardOptions` (optional) |
+| **returns** | `MaskedResult` |
+
+---
+
+### `maskCardBatch(cards, options?)`
+
+| | |
+|---|---|
+| **cards** | `CardInput[]` |
+| **options** | `MaskCardOptions` (optional), applied to each item |
+| **returns** | `MaskedResult[]` — empty array if `cards` is missing or not an array |
+
+---
+
+### `detectCardType(input)`
+
+| | |
+|---|---|
+| **input** | `CardInput` |
+| **returns** | `CardType` |
+
+---
+
+### `getCardTypeGrouping(cardType)`
+
+| | |
+|---|---|
+| **cardType** | `CardType` |
+| **returns** | `number[]` — e.g. `[4, 6, 5]` for Amex, `[4, 6, 4]` for Diners, `[4, 4, 4, 4]` for most other labels |
+
+---
+
+### `getCardLast(count, input)` / `getCardFirst(count, input)`
+
+| | |
+|---|---|
+| **count** | Positive finite number; `≤ 0` or non-finite → `''` |
+| **input** | `CardInput` |
+| **returns** | `string` — digits only (non-digits stripped); up to `count` from end or start |
+
+---
+
+### `getCardLast4(input)` / `getCardFirst6(input)`
+
+Convenience wrappers: `getCardLast(4, input)` and `getCardFirst(6, input)`.
+
+| | |
+|---|---|
+| **input** | `CardInput` |
+| **returns** | `string` — digits only |
+
+---
+
+### `isValidCardLuhn(input)`
+
+Luhn (mod 10) on digits after stripping non-digits. Requires at least two digits. Returns `false` for all-zero strings, nullish input, or failed checksum.
+
+| | |
+|---|---|
+| **input** | `CardInput` |
+| **returns** | `boolean` |
+
+---
+
+### `isValidCard(input, checkLength?)`
+
+| | |
+|---|---|
+| **input** | `CardInput` |
+| **checkLength** | `boolean` (default `true`) — if `true`, length must be 13–19 inclusive |
+| **returns** | `boolean` |
+
+---
+
+### TypeScript types
 
 ```typescript
 export type MaskChar = string;
 
+export type CardType =
+  | 'visa'
+  | 'mastercard'
+  | 'amex'
+  | 'discover'
+  | 'jcb'
+  | 'diners'
+  | 'unionpay'
+  | 'maestro'
+  | 'unknown';
+
 export interface MaskCardOptions {
-  /** Character to use for masking (default: '*') */
-  maskChar?: string;
-  
-  /** Number of digits to show at the beginning (default: 0) */
+  maskChar?: MaskChar;
   unmaskedStart?: number;
-  
-  /** Number of digits to show at the end (default: 4) */
   unmaskedEnd?: number;
-  
-  /** Maintain original spacing/formatting from input (default: false) */
   preserveSpacing?: boolean;
-  
-  /** Add spacing in output (default: undefined) */
   grouping?: number | number[];
-  
-  /** Maintain original digit count in output (default: true) */
   showLength?: boolean;
-  
-  /** Validate if input looks like valid card number (default: false) */
   validateInput?: boolean;
 }
 
 export type CardInput = string | number;
-
 export type MaskedResult = string;
+```
+
+```typescript
+import {
+  maskCard,
+  maskCardAuto,
+  maskCardBatch,
+  detectCardType,
+  getCardTypeGrouping,
+  getCardLast4,
+  isValidCard,
+  type MaskCardOptions,
+  type CardInput,
+  type CardType,
+} from '@ekaone/mask-card';
 ```
 
 ## Real-World Use Cases
@@ -384,12 +551,14 @@ maskCard('4532123456789012', { unmaskedStart: 8, unmaskedEnd: 4 });
 
 ### Important Notice
 
-🔒 **This library is designed for display and logging purposes.** It does not:
+🔒 **This library is designed for display, logging, and light client-side validation.** It does not:
 - Store card data securely
 - Tokenize cards for payment processing
-- Validate card authenticity (Luhn algorithm)
-- Handle actual payment transactions
+- Replace server-side validation (always verify payments on your backend)
+- Handle actual payment transactions by itself
 - Encrypt or hash card data
+
+**Luhn** (`isValidCardLuhn` / `isValidCard`) checks the checksum only: a passing result does not mean the account is open, has funds, or was issued. Never log full PANs in production.
 
 This is a **pure masking utility** that works in both frontend and backend environments (Node.js, browser, serverless functions, etc.).
 
@@ -474,20 +643,7 @@ This library works in all modern browsers and Node.js environments that support 
 
 ## TypeScript Support
 
-Full TypeScript support with comprehensive type definitions included.
-
-```typescript
-import { maskCard, type MaskCardOptions, type CardInput } from '@ekaone/mask-card';
-
-const options: MaskCardOptions = {
-  maskChar: '•',
-  unmaskedEnd: 4,
-  grouping: 4
-};
-
-const card: CardInput = '4532123456789012';
-const masked: string = maskCard(card, options);
-```
+Full TypeScript support with types exported from the package entry (see **TypeScript types** under [API Reference](#api-reference)).
 
 ## Contributing
 
