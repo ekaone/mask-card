@@ -270,7 +270,7 @@ getCardLast(0, '4532123456789012');    // '' — counts ≤ 0 return ''
 
 Masks a credit card number according to the provided options.
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` — string or number; non-digits are stripped |
 | **options** | `MaskCardOptions` (optional) |
@@ -294,7 +294,7 @@ Masks a credit card number according to the provided options.
 
 Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping(detectCardType(input))` when omitted, and `preserveSpacing` is forced to `false`.
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` |
 | **options** | `MaskCardOptions` (optional) |
@@ -304,7 +304,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 ### `maskCardBatch(cards, options?)`
 
-| | |
+| Parameter | Description |
 |---|---|
 | **cards** | `CardInput[]` |
 | **options** | `MaskCardOptions` (optional), applied to each item |
@@ -314,7 +314,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 ### `detectCardType(input)`
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` |
 | **returns** | `CardType` |
@@ -323,7 +323,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 ### `getCardTypeGrouping(cardType)`
 
-| | |
+| Parameter | Description |
 |---|---|
 | **cardType** | `CardType` |
 | **returns** | `number[]` — e.g. `[4, 6, 5]` for Amex, `[4, 6, 4]` for Diners, `[4, 4, 4, 4]` for most other labels |
@@ -332,7 +332,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 ### `getCardLast(count, input)` / `getCardFirst(count, input)`
 
-| | |
+| Parameter | Description |
 |---|---|
 | **count** | Positive finite number; `≤ 0` or non-finite → `''` |
 | **input** | `CardInput` |
@@ -344,7 +344,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 Convenience wrappers: `getCardLast(4, input)` and `getCardFirst(6, input)`.
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` |
 | **returns** | `string` — digits only |
@@ -355,7 +355,7 @@ Convenience wrappers: `getCardLast(4, input)` and `getCardFirst(6, input)`.
 
 Luhn (mod 10) on digits after stripping non-digits. Requires at least two digits. Returns `false` for all-zero strings, nullish input, or failed checksum.
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` |
 | **returns** | `boolean` |
@@ -364,7 +364,7 @@ Luhn (mod 10) on digits after stripping non-digits. Requires at least two digits
 
 ### `isValidCard(input, checkLength?)`
 
-| | |
+| Parameter | Description |
 |---|---|
 | **input** | `CardInput` |
 | **checkLength** | `boolean` (default `true`) — if `true`, length must be 13–19 inclusive |
