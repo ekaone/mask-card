@@ -24,6 +24,12 @@ export const maskCard = (
     validateInput = false,
   } = options;
 
+  if (maskChar.length !== 1) {
+    throw new Error(
+      `maskChar must be a single character, got: "${maskChar}"`,
+    );
+  }
+
   // Handle null/undefined input
   if (input == null) {
     return "";

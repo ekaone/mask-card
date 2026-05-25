@@ -9,6 +9,8 @@
 export { maskCard } from "./maskCard";
 export { maskCardBatch } from "./maskCardBatch";
 export { maskCardAuto } from "./autoFormat";
+export { maskCardAutoBatch } from "./maskCardAutoBatch";
+export { maskCardWithMeta } from "./maskCardWithMeta";
 export { detectCardType, getCardTypeGrouping } from "./cardType";
 export {
   getCardLast,
@@ -22,4 +24,5 @@ export type {
   MaskCardOptions,
   MaskedResult,
   CardType,
+  CardMaskResult,
 } from "./types";

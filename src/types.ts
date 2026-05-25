@@ -59,3 +59,11 @@ export interface MaskCardOptions {
 export type CardInput = string | number;
 
 export type MaskedResult = string;
+
+export interface CardMaskResult {
+  masked: MaskedResult;
+  cardType: CardType;
+  isValid: boolean;
+  first6: string;
+  last4: string;
+}
