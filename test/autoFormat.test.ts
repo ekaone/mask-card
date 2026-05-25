@@ -34,7 +34,8 @@ describe("maskCardAuto", () => {
     });
 
     it("should auto-format unknown cards with 4-4-4-4 grouping", () => {
-      expect(maskCardAuto("1234567890123456")).toBe("**** **** **** 3456");
+      // 9-prefix is not matched by any brand rule → 'unknown' → default 4-4-4-4
+      expect(maskCardAuto("9999000000003456")).toBe("**** **** **** 3456");
     });
   });
 

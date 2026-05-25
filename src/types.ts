@@ -9,6 +9,10 @@ export type CardType =
   | "diners"
   | "unionpay"
   | "maestro"
+  | "elo"
+  | "mir"
+  | "rupay"
+  | "uatp"
   | "unknown";
 
 export interface MaskCardOptions {

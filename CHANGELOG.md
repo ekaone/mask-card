@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-05-25
+
+### Added
+- **Elo** (Brazil) — detects via 4-digit BINs (4011, 4312, 4389, 4514, 4573, 4576) and 14 specific 6-digit BIN ranges; checked before Visa/Discover/UnionPay/Maestro to resolve overlapping prefixes
+- **Mir** (Russia) — detects range 2200–2204; checked before Mastercard (2221–2720)
+- **RuPay** (India) — detects via 3-digit BIN 508 and 4-digit BINs 6069, 6071, 6074, 6079, 6080, 6521, 6522; checked before Maestro
+- **UATP** (Universal Air Travel Plan, airline cards) — detects any 1-prefix card; `getCardTypeGrouping("uatp")` returns `[4, 5, 6]` (15-digit format)
+- `CardType` union now includes `"elo" | "mir" | "rupay" | "uatp"`
+- `package.json` keywords updated with new brand entries
+
+### Changed
+- `detectCardType` detection order refactored: Elo → Mir → UATP → Visa → Mastercard → Amex → Discover → JCB → Diners → UnionPay → RuPay → Maestro; Maestro end-guard simplified since conflicting brands are now explicitly handled above it
+- `parseInt` calls in `detectCardType` now include explicit radix 10
+
+---
+
 ## [1.1.2] - 2026-05-25
 
 ### Added

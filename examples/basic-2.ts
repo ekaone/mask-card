@@ -1,3 +1,4 @@
+// Make sure the library is bundled correctly
 import { maskCard } from "../dist/index.js";
 
 console.log("=== Basic Usage Examples ===\n");

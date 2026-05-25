@@ -119,9 +119,96 @@ describe("detectCardType", () => {
     });
   });
 
+  describe("Elo detection", () => {
+    it("should detect Elo by 4-digit BIN (4011, 4312, 4389, 4514, 4573, 4576)", () => {
+      expect(detectCardType("4011000000000000")).toBe("elo");
+      expect(detectCardType("4312000000000000")).toBe("elo");
+      expect(detectCardType("4389000000000000")).toBe("elo");
+      expect(detectCardType("4514000000000000")).toBe("elo");
+      expect(detectCardType("4573000000000000")).toBe("elo");
+      expect(detectCardType("4576000000000000")).toBe("elo");
+    });
+
+    it("should detect Elo by specific 6-digit BIN (431274, 438935, 636297, 636368…)", () => {
+      expect(detectCardType("4312740000000000")).toBe("elo");
+      expect(detectCardType("4389350000000000")).toBe("elo");
+      expect(detectCardType("6362970000000000")).toBe("elo");
+      expect(detectCardType("6363680000000000")).toBe("elo");
+      expect(detectCardType("6277800000000000")).toBe("elo"); // 627780 — overlaps UnionPay 62-prefix
+    });
+
+    it("should detect Elo by 6-digit BIN range (509000-509999)", () => {
+      expect(detectCardType("5090000000000000")).toBe("elo");
+      expect(detectCardType("5099990000000000")).toBe("elo");
+    });
+
+    it("should detect Elo by 6-digit BIN range (650031-650051, 655000-655058…)", () => {
+      expect(detectCardType("6500310000000000")).toBe("elo"); // 650031 — overlaps Discover 65-prefix
+      expect(detectCardType("6550000000000000")).toBe("elo"); // 655000
+      expect(detectCardType("6550580000000000")).toBe("elo"); // 655058
+    });
+
+    it("should NOT detect Elo for non-Elo 65xx cards (Discover)", () => {
+      // 650000 is below the first Elo range (650031); Discover catches it via 65-prefix
+      expect(detectCardType("6500000000000000")).toBe("discover");
+      expect(detectCardType("6599999999999999")).toBe("discover");
+    });
+  });
+
+  describe("Mir detection", () => {
+    it("should detect Mir (2200-2204)", () => {
+      expect(detectCardType("2200000000000000")).toBe("mir");
+      expect(detectCardType("2201000000000000")).toBe("mir");
+      expect(detectCardType("2204000000000000")).toBe("mir");
+    });
+
+    it("should NOT detect Mir for 2205+ (falls to unknown, not Mastercard)", () => {
+      expect(detectCardType("2205000000000000")).toBe("unknown");
+    });
+
+    it("should NOT overlap with Mastercard (2221-2720)", () => {
+      expect(detectCardType("2221000000000000")).toBe("mastercard");
+      expect(detectCardType("2199000000000000")).toBe("unknown");
+    });
+  });
+
+  describe("UATP detection", () => {
+    it("should detect UATP (starts with 1)", () => {
+      expect(detectCardType("123456789012345")).toBe("uatp");
+      expect(detectCardType("100000000000000")).toBe("uatp");
+      expect(detectCardType("199999999999999")).toBe("uatp");
+    });
+
+    it("should detect UATP with formatting", () => {
+      expect(detectCardType("1234 56789 012345")).toBe("uatp");
+    });
+  });
+
+  describe("RuPay detection", () => {
+    it("should detect RuPay by 3-digit BIN (508)", () => {
+      expect(detectCardType("5080000000000000")).toBe("rupay");
+      expect(detectCardType("5089999999999999")).toBe("rupay");
+    });
+
+    it("should detect RuPay by 4-digit BIN (6069, 6071, 6074, 6079, 6080, 6521, 6522)", () => {
+      expect(detectCardType("6069000000000000")).toBe("rupay");
+      expect(detectCardType("6071000000000000")).toBe("rupay");
+      expect(detectCardType("6074000000000000")).toBe("rupay");
+      expect(detectCardType("6079000000000000")).toBe("rupay");
+      expect(detectCardType("6080000000000000")).toBe("rupay");
+      expect(detectCardType("6521000000000000")).toBe("rupay");
+      expect(detectCardType("6522000000000000")).toBe("rupay");
+    });
+
+    it("should NOT conflict with Maestro for non-RuPay 50/6-prefix cards", () => {
+      expect(detectCardType("5000000000000000")).toBe("maestro"); // 50, not 508
+      expect(detectCardType("6300000000000000")).toBe("maestro"); // 6-prefix, not RuPay BIN
+    });
+  });
+
   describe("Unknown cards", () => {
     it("should return unknown for unrecognized patterns", () => {
-      expect(detectCardType("1234567890123456")).toBe("unknown");
+      // Note: 1-prefix is now UATP; use 9- and 0-prefix for unknown
       expect(detectCardType("9999999999999999")).toBe("unknown");
       expect(detectCardType("0000000000000000")).toBe("unknown");
     });
@@ -189,5 +276,21 @@ describe("getCardTypeGrouping", () => {
 
   it("should return standard grouping for unknown", () => {
     expect(getCardTypeGrouping("unknown")).toEqual([4, 4, 4, 4]);
+  });
+
+  it("should return UATP grouping (4-5-6)", () => {
+    expect(getCardTypeGrouping("uatp")).toEqual([4, 5, 6]);
+  });
+
+  it("should return standard grouping (4-4-4-4) for Elo", () => {
+    expect(getCardTypeGrouping("elo")).toEqual([4, 4, 4, 4]);
+  });
+
+  it("should return standard grouping (4-4-4-4) for Mir", () => {
+    expect(getCardTypeGrouping("mir")).toEqual([4, 4, 4, 4]);
+  });
+
+  it("should return standard grouping (4-4-4-4) for RuPay", () => {
+    expect(getCardTypeGrouping("rupay")).toEqual([4, 4, 4, 4]);
   });
 });

@@ -9,13 +9,14 @@ A lightweight, zero-dependency TypeScript library for masking credit card number
 - 🔒 **PCI DSS friendly** - Defaults align with common display guidelines (last 4 digits)
 - ✨ **Lightweight** - Small footprint, zero dependencies
 - 📦 **TypeScript** - Full type safety and IntelliSense support
-- 🎨 **Auto-format** - `maskCardAuto` picks spacing by detected card brand (Visa, Amex, Diners, etc.)
+- 🎨 **Auto-format** - `maskCardAuto` picks spacing by detected card brand (Visa, Amex, Diners, UATP, etc.)
 - 🏷️ **Card type detection** - `detectCardType` and `getCardTypeGrouping` for BIN-style routing
 - ✅ **Luhn checks** - `isValidCardLuhn` / `isValidCard` for checksum (and optional 13–19 length)
-- 📋 **Batch** - `maskCardBatch` to mask many numbers with one options object
+- 📋 **Batch** - `maskCardBatch` (uniform options) · `maskCardAutoBatch` (per-card brand detection)
+- 🔍 **Rich result** - `maskCardWithMeta` returns `{ masked, cardType, isValid, first6, last4 }` in one call
 - 🧩 **Helpers** - `getCardLast`, `getCardFirst`, `getCardLast4`, `getCardFirst6`
 - ⚙️ **Flexible** - Mask character, grouping, shortened masks, preserve separators, validation
-- 🎯 **Universal** - Works with major brands (Visa, Mastercard, Amex, Discover, JCB, Diners, UnionPay, Maestro)
+- 🌍 **12 brands** - Visa, Mastercard, Amex, Discover, JCB, Diners, UnionPay, Maestro, Elo, Mir, RuPay, UATP
 
 ## Installation
 
@@ -221,7 +222,50 @@ maskCardBatch(['4532123456789012', '5500000000000004'], { grouping: 4 });
 // ['**** **** **** 9012', '**** **** **** 0004']
 ```
 
-For brand-specific spacing on each row, map with `maskCardAuto` instead of a single `grouping` in batch.
+For brand-specific spacing on each row, use `maskCardAutoBatch` — it runs `maskCardAuto` on every element so each card gets its own grouping:
+
+```typescript
+import { maskCardAutoBatch } from '@ekaone/mask-card';
+
+maskCardAutoBatch([
+  '4532123456789012', // Visa → 4-4-4-4
+  '378282246310005',  // Amex → 4-6-5
+  '30569309025904',   // Diners → 4-6-4
+]);
+// [
+//   '**** **** **** 9012',
+//   '**** ****** *0005',
+//   '**** ****** 5904',
+// ]
+```
+
+Options are forwarded to every card:
+
+```typescript
+maskCardAutoBatch(['4532123456789012', '378282246310005'], { maskChar: '•' });
+// ['•••• •••• •••• 9012', '•••• •••••• •0005']
+```
+
+### Rich result (`maskCardWithMeta`)
+
+Returns every field a checkout or audit flow typically needs — one call instead of four:
+
+```typescript
+import { maskCardWithMeta } from '@ekaone/mask-card';
+
+const result = maskCardWithMeta('4532123456789014');
+// {
+//   masked:   '**** **** **** 9014',
+//   cardType: 'visa',
+//   isValid:  true,
+//   first6:   '453212',
+//   last4:    '9014',
+// }
+
+// Options are forwarded to the masked output
+maskCardWithMeta('378282246310005', { maskChar: '#', unmaskedStart: 4 });
+// { masked: '3782 ###### #0005', cardType: 'amex', isValid: true, first6: '378282', last4: '0005' }
+```
 
 ### Card type detection
 
@@ -233,7 +277,9 @@ detectCardType('4532123456789012'); // 'visa'
 getCardTypeGrouping('amex'); // [4, 6, 5]
 ```
 
-`detectCardType` returns one of: `visa`, `mastercard`, `amex`, `discover`, `jcb`, `diners`, `unionpay`, `maestro`, or `unknown` (see `CardType` below). It ignores non-digits; empty or invalid input yields `unknown`.
+`detectCardType` returns one of: `visa`, `mastercard`, `amex`, `discover`, `jcb`, `diners`, `unionpay`, `maestro`, `elo`, `mir`, `rupay`, `uatp`, or `unknown` (see `CardType` below). It ignores non-digits; empty or invalid input yields `unknown`.
+
+`getCardTypeGrouping` returns `[4, 5, 6]` for UATP (15-digit airline cards), `[4, 6, 5]` for Amex, `[4, 6, 4]` for Diners, and `[4, 4, 4, 4]` for all other brands.
 
 ### Luhn validation
 
@@ -312,6 +358,40 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 
 ---
 
+### `maskCardAutoBatch(cards, options?)`
+
+Like `maskCardBatch` but runs `maskCardAuto` per element — each card gets its own brand-specific grouping.
+
+| Parameter | Description |
+|---|---|
+| **cards** | `CardInput[]` |
+| **options** | `MaskCardOptions` (optional), forwarded to each `maskCardAuto` call |
+| **returns** | `MaskedResult[]` — empty array if `cards` is missing or not an array |
+
+---
+
+### `maskCardWithMeta(input, options?)`
+
+Runs `maskCardAuto` + `detectCardType` + `isValidCard` + `getCardFirst6` + `getCardLast4` in one call.
+
+| Parameter | Description |
+|---|---|
+| **input** | `CardInput` |
+| **options** | `MaskCardOptions` (optional), forwarded to `maskCardAuto` |
+| **returns** | `CardMaskResult` |
+
+#### `CardMaskResult`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `masked` | `MaskedResult` | Brand-formatted masked card string |
+| `cardType` | `CardType` | Detected brand |
+| `isValid` | `boolean` | Luhn + length check result |
+| `first6` | `string` | First 6 digits (BIN/IIN) |
+| `last4` | `string` | Last 4 digits |
+
+---
+
 ### `detectCardType(input)`
 
 | Parameter | Description |
@@ -326,7 +406,7 @@ Same options as `maskCard`, except `grouping` defaults from `getCardTypeGrouping
 | Parameter | Description |
 |---|---|
 | **cardType** | `CardType` |
-| **returns** | `number[]` — e.g. `[4, 6, 5]` for Amex, `[4, 6, 4]` for Diners, `[4, 4, 4, 4]` for most other labels |
+| **returns** | `number[]` — `[4, 6, 5]` for Amex · `[4, 6, 4]` for Diners · `[4, 5, 6]` for UATP · `[4, 4, 4, 4]` for all others |
 
 ---
 
@@ -386,6 +466,10 @@ export type CardType =
   | 'diners'
   | 'unionpay'
   | 'maestro'
+  | 'elo'
+  | 'mir'
+  | 'rupay'
+  | 'uatp'
   | 'unknown';
 
 export interface MaskCardOptions {
@@ -398,6 +482,14 @@ export interface MaskCardOptions {
   validateInput?: boolean;
 }
 
+export interface CardMaskResult {
+  masked: MaskedResult;
+  cardType: CardType;
+  isValid: boolean;
+  first6: string;
+  last4: string;
+}
+
 export type CardInput = string | number;
 export type MaskedResult = string;
 ```
@@ -407,11 +499,14 @@ import {
   maskCard,
   maskCardAuto,
   maskCardBatch,
+  maskCardAutoBatch,
+  maskCardWithMeta,
   detectCardType,
   getCardTypeGrouping,
   getCardLast4,
   isValidCard,
   type MaskCardOptions,
+  type CardMaskResult,
   type CardInput,
   type CardType,
 } from '@ekaone/mask-card';
@@ -566,33 +661,60 @@ Always ensure your systems comply with PCI DSS requirements when handling real p
 
 ## Supported Card Types
 
-Works with all major card brands:
+12 brands supported. `maskCardAuto` applies the correct grouping for each automatically.
 
 ```typescript
-// Visa (16 digits)
-maskCard('4532123456789012');
-// Output: '************9012'
+// Visa (16 digits) → 4-4-4-4
+maskCardAuto('4532123456789012');  // '**** **** **** 9012'
 
-// Mastercard (16 digits)
-maskCard('5500000000000004');
-// Output: '************0004'
+// Mastercard (16 digits) → 4-4-4-4
+maskCardAuto('5500000000000004');  // '**** **** **** 0004'
 
-// American Express (15 digits)
-maskCard('378282246310005');
-// Output: '***********0005'
+// American Express (15 digits) → 4-6-5
+maskCardAuto('378282246310005');   // '**** ****** *0005'
 
-// Discover (16 digits)
-maskCard('6011000000000004');
-// Output: '************0004'
+// Discover (16 digits) → 4-4-4-4
+maskCardAuto('6011000000000004'); // '**** **** **** 0004'
 
-// JCB (16 digits)
-maskCard('3530111333300000');
-// Output: '************0000'
+// JCB (16 digits) → 4-4-4-4
+maskCardAuto('3530111333300000'); // '**** **** **** 0000'
 
-// Diners Club (14 digits)
-maskCard('30569309025904');
-// Output: '**********5904'
+// Diners Club (14 digits) → 4-6-4
+maskCardAuto('30569309025904');   // '**** ****** 5904'
+
+// UnionPay (16 digits) → 4-4-4-4
+maskCardAuto('6200000000000000'); // '**** **** **** 0000'
+
+// Maestro (16 digits) → 4-4-4-4
+maskCardAuto('5000000000000000'); // '**** **** **** 0000'
+
+// Elo — Brazil (16 digits) → 4-4-4-4
+maskCardAuto('4011000000000000'); // '**** **** **** 0000'
+
+// Mir — Russia (16 digits) → 4-4-4-4
+maskCardAuto('2200000000000000'); // '**** **** **** 0000'
+
+// RuPay — India (16 digits) → 4-4-4-4
+maskCardAuto('6069000000000000'); // '**** **** **** 0000'
+
+// UATP — Airline (15 digits) → 4-5-6
+maskCardAuto('123456789012345');  // '**** ***** ******345'
 ```
+
+| Brand | Region | BIN / Prefix | Digits | Grouping |
+|-------|--------|-------------|--------|----------|
+| Visa | Global | `4` | 13–19 | 4-4-4-4 |
+| Mastercard | Global | `51–55`, `2221–2720` | 16 | 4-4-4-4 |
+| Amex | Global | `34`, `37` | 15 | **4-6-5** |
+| Discover | Global | `6011`, `622126–622925`, `644–649`, `65` | 16 | 4-4-4-4 |
+| JCB | Japan | `3528–3589` | 16 | 4-4-4-4 |
+| Diners Club | Global | `300–305`, `36`, `38–39` | 14 | **4-6-4** |
+| UnionPay | China | `62` | 16+ | 4-4-4-4 |
+| Maestro | Europe | `50`, `56–58`, `6` | 12–19 | 4-4-4-4 |
+| Elo | Brazil | `4011`, `4312`, `4389`, `4514`, `4573`, `4576`, 14× 6-digit ranges | 16 | 4-4-4-4 |
+| Mir | Russia | `2200–2204` | 16 | 4-4-4-4 |
+| RuPay | India | `508`, `6069`, `6071`, `6074`, `6079`, `6080`, `6521`, `6522` | 16 | 4-4-4-4 |
+| UATP | Airline | `1` | 15 | **4-5-6** |
 
 ## Edge Cases
 

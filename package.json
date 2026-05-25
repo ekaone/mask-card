@@ -1,6 +1,6 @@
 {
   "name": "@ekaone/mask-card",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "A lightweight, zero-dependency TypeScript library for masking credit card numbers",
   "keywords": [
     "credit card",
@@ -13,6 +13,10 @@
     "mask-discover",
     "mask-jcb",
     "mask-diners",
+    "mask-elo",
+    "mask-mir",
+    "mask-rupay",
+    "mask-uatp",
     "typescript"
   ],
   "author": {
